@@ -1,4 +1,5 @@
-﻿using PopLoader.FileConverter.Rsgp;
+﻿using System.Text;
+using PopLoader.FileConverter.Rsgp;
 namespace PopLoader.FileConverter.Rsb;
 
 public static class ResourceBinary

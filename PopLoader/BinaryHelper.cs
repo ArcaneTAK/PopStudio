@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace PopLoader.BinaryHelper;
@@ -15,6 +17,7 @@ public static class Zlib
         return temp;
     }   
 }
+
 public static class BinaryReaderHelper
 {
     public static string ReadUTF8StringEndWithNull(this BinaryReader br)
@@ -25,12 +28,9 @@ public static class BinaryReaderHelper
             str.Add(a);
         return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(str));
     }
-    public static int ReadInt24(this BinaryReader br)
+    public static int ReadInt24LittleEndian(this BinaryReader br)
     {
-        if (BitConverter.IsLittleEndian)
-            return (br.ReadByte() << 16) | (br.ReadByte() << 8) | br.ReadByte();
-        else
-            return br.ReadByte() | (br.ReadByte() << 8) | (br.ReadByte() << 16);
+        return br.ReadByte() | (br.ReadByte() << 8) | (br.ReadByte() << 16);
     }
     /// <summary>
     /// Good luck ¯\_(ツ)_/¯.
@@ -45,9 +45,9 @@ public static class BinaryReaderHelper
         while ((a = br.ReadByte()) != 0)
         {
             str.Add(a);
-            unknown = br.ReadInt24(); // some kind of length, not sure if neccessary.
+            unknown = br.ReadInt24LittleEndian(); // some kind of length, not sure if neccessary.
         }
-        unknown = br.ReadInt24();
+        unknown = br.ReadInt24LittleEndian();
         return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(str));
     }
 }

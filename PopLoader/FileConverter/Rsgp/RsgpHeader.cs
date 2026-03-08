@@ -9,11 +9,11 @@ public class RsgpHeader
 {
     public int Version;
     public ResourceGroupInfo SubgroupInfo;
-    public int InfoSize;
+    public int TrieSize;
     /// <summary>
     /// Offset relative to the start of the RSGP file.
     /// </summary>
-    public int InfoOffset;
+    public int TrieOffset;
 
     public RsgpHeader(BinaryReader br)
     {
@@ -29,7 +29,7 @@ public class RsgpHeader
 
         SubgroupInfo = new ResourceGroupInfo(br);
 
-        InfoSize = br.ReadInt32();
-        InfoOffset = br.ReadInt32();
+        TrieSize = br.ReadInt32();
+        TrieOffset = br.ReadInt32();
     }
 }

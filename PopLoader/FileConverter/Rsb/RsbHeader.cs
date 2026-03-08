@@ -50,8 +50,8 @@ public class RsbHeader
         
         Version = br.ReadInt32();
         _ = br.ReadInt32();
-
         HeaderLength = br.ReadInt32();
+        
         FileCount = br.ReadInt32();
         FileListOffset = br.ReadInt32();
         _ = br.ReadInt32();

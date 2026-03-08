@@ -19,15 +19,12 @@ public static class TextureConverter
     /// </summary>
     public static void LoadBindings()
     {
-        if (BlankWindow is null)
+        BlankWindow ??= new NativeWindow(new NativeWindowSettings()
         {
-            BlankWindow = new NativeWindow(new NativeWindowSettings()
-            {
-                ClientSize = new OpenTK.Mathematics.Vector2i(1, 1),
-                StartVisible = false,
-                Flags = ContextFlags.Offscreen
-            });
-        }
+            ClientSize = new OpenTK.Mathematics.Vector2i(1, 1),
+            StartVisible = false,
+            Flags = ContextFlags.Offscreen
+        });
     }
     public static void PixelDataToImage<TPixel>(TPixel[] data, int width, int height, string filePath) where TPixel : unmanaged, IPixel<TPixel>
     {
