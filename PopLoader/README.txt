@@ -12,13 +12,14 @@ Trie_ASCII_Int24_Int32
 ### Rsb : ReSource Binary
 General Structure:
 - Rsb Header
-- File Trie
-- Rsgp Trie
+- File Name to Package ID Trie
+- Package Name to Package ID
 - Composite Info
 - Composite Trie
-- Rspg Info
-- Autopool
+- Package Info
+- Autopool Info
 - Ptx Info
+- Packages
 
 Rsb Header:
 Offset      Size        Usage                   Example/ Comment

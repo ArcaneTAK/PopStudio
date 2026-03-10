@@ -4,20 +4,20 @@ public class RsbHeader
 {
     public int Version;
     public int HeaderLength;
-    public int FileCount;
-    public int FileListOffset;
+    public int FileTrieSizeBytes;
+    public int FileTrieOffset;
 
-    public int SubgroupListCount;
-    public int SubgroupListInfoOffset;
-    public int SubgroupCount;
-    public int SubgroupInfoOffset;
-    public int RsgpInfoSize;
+    public int PackageTrieSizeBytes;
+    public int PackageTrieOffset;
+    public int PackageCount;
+    public int PackageInfoOffset;
+    public int OnePackageInfoSize;
 
     public int GroupCount;
     public int GroupInfoOffset;
     public int GroupInfoSize;
-    public int GroupListCount;
-    public int GroupListOffset;
+    public int GroupTrieCount;
+    public int GroupTrieOffset;
 
     public int AutopoolCount;
     public int AutopoolInfoOffset;
@@ -52,27 +52,27 @@ public class RsbHeader
         _ = br.ReadInt32();
         HeaderLength = br.ReadInt32();
         
-        FileCount = br.ReadInt32();
-        FileListOffset = br.ReadInt32();
+        FileTrieSizeBytes = br.ReadInt32();
+        FileTrieOffset = br.ReadInt32();
         _ = br.ReadInt32();
         _ = br.ReadInt32();
 
-        SubgroupListCount = br.ReadInt32();
-        SubgroupListInfoOffset = br.ReadInt32();
-        SubgroupCount = br.ReadInt32();
-        SubgroupInfoOffset = br.ReadInt32();
-        RsgpInfoSize = br.ReadInt32();
+        PackageTrieSizeBytes = br.ReadInt32();
+        PackageTrieOffset = br.ReadInt32();
+        PackageCount = br.ReadInt32();
+        PackageInfoOffset = br.ReadInt32();
 
+        OnePackageInfoSize = br.ReadInt32();
         GroupCount = br.ReadInt32();
         GroupInfoOffset = br.ReadInt32();
         GroupInfoSize = br.ReadInt32();
-        GroupListCount = br.ReadInt32();
-        GroupListOffset = br.ReadInt32();
 
+        GroupTrieCount = br.ReadInt32();
+        GroupTrieOffset = br.ReadInt32();
         AutopoolCount = br.ReadInt32();
         AutopoolInfoOffset = br.ReadInt32();
-        AutopoolInfoSize = br.ReadInt32();
 
+        AutopoolInfoSize = br.ReadInt32();
         PtxCount = br.ReadInt32();
         PtxInfoOffset = br.ReadInt32();
         PtxInfoSize = br.ReadInt32();
@@ -81,6 +81,6 @@ public class RsbHeader
         _ = br.ReadInt32();
         _ = br.ReadInt32();
 
-        if (Version == 4) RsbInfoLength = br.ReadInt32();
+        RsbInfoLength = br.ReadInt32();
     }
 }

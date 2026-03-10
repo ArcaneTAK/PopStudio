@@ -1,79 +1,118 @@
 using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
+using OpenTK.Windowing.Common.Input;
 using PopLoader.BinaryHelper;
 using PopLoader.FileConverter.Rsb;
 using PopLoader.Texture;
 
 namespace PopLoader.FileConverter.Rsgp;
 
-public static class ResourceGroupPackage
+public class RsgpFileInfo
 {
-    public static void Unpack(BinaryReader br, PtxInfo[] ptx1Infos, int startId, string path)
+    public RsgInfoType FileType;
+    public int FileOffset;
+    public uint FileSize;
+
+    public RsgpFileInfo(BinaryReader br)
     {
-        long Pos = br.BaseStream.Position; // Allow for use directly from Rsb
-        RsgpHeader rsgpHeaderInfo = new(br);
+        FileType = (RsgInfoType)br.ReadInt32();
+        FileOffset = br.ReadInt32();
+        FileSize = br.ReadUInt32();
+    }
+}
 
+public class RsgpImageInfo
+{
+    public int ImageIndexInPackage;
+    public int Width;
+    public int Height;
 
-        br.BaseStream.Seek(Pos + rsgpHeaderInfo.SubgroupInfo.DataOffset, SeekOrigin.Begin);
-        MemoryStream dataFile = new(br.ReadBytes(rsgpHeaderInfo.SubgroupInfo.CompressedDataSize));
-        if ((rsgpHeaderInfo.SubgroupInfo.DataFlags & DataFlags.CompressedData) == DataFlags.CompressedData && rsgpHeaderInfo.SubgroupInfo.DecompressedDataSize != 0)
+    public RsgpImageInfo(BinaryReader br)
+    {
+        ImageIndexInPackage = br.ReadInt32(); // This is suppposed to be image id but is not set
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        Width = br.ReadInt32();
+        Height = br.ReadInt32();
+    }
+}
+
+public class ResourceGroupPackage : IDisposable
+{
+    public RsgpHeader Header;
+    public Dictionary<string, RsgpFileInfo> PackageFileInfo;
+    public Dictionary<string, RsgpImageInfo> ImageInfo;
+    public MemoryStream DynamicDataStream;
+    public MemoryStream ImageStream;
+    public ResourceGroupPackage(BinaryReader br)
+    {
+        long Pos = br.BaseStream.Position;
+        Header = new(br);
+
+        br.BaseStream.Seek(Pos + Header.DataOffset, SeekOrigin.Begin);
+        DynamicDataStream = new(br.ReadBytes(Header.DataBlobSize));
+        if (Header.DataFlags.HasFlag(DataFlags.CompressedData) && Header.DecompressedDataSize != 0)
+            DynamicDataStream = Zlib.Decompress(DynamicDataStream);
+
+        br.BaseStream.Seek(Pos + Header.ImageOffset, SeekOrigin.Begin);
+        ImageStream = new(br.ReadBytes(Header.CompressedImageSize));
+        if (Header.DataFlags.HasFlag(DataFlags.CompressedImage) && Header.DecompressedImageSize != 0)
+            ImageStream = Zlib.Decompress(ImageStream);
+
+        ImageInfo = [];
+        PackageFileInfo = [];
+
+        br.BaseStream.Seek(Pos + Header.TrieOffset, SeekOrigin.Begin);
+
+        List<byte> currentname = [];
+        List<int> offset = [];
+        do
         {
-            dataFile = Zlib.Decompress(dataFile);
-        }
-
-
-        br.BaseStream.Seek(Pos + rsgpHeaderInfo.SubgroupInfo.ImageOffset, SeekOrigin.Begin);
-        MemoryStream imageFile = new(br.ReadBytes(rsgpHeaderInfo.SubgroupInfo.CompressedImageSize));
-        if ((rsgpHeaderInfo.SubgroupInfo.DataFlags & DataFlags.CompressedImage) == DataFlags.CompressedImage && rsgpHeaderInfo.SubgroupInfo.DecompressedImageSize != 0)
-            imageFile = Zlib.Decompress(imageFile);
-
-
-        br.BaseStream.Seek(Pos + rsgpHeaderInfo.TrieOffset, SeekOrigin.Begin);
-        while (br.BaseStream.Position < Pos + rsgpHeaderInfo.TrieOffset + rsgpHeaderInfo.TrieSize)
-        {
-            string Name = br.ReadUTF8StringSkip3EndWithNull();
-            RsgInfoType InfoType = (RsgInfoType)br.ReadInt32();
-            int FileOffset = br.ReadInt32();
-            uint FileSize = br.ReadUInt32();
-            
-            switch (InfoType)
+            var val = new AsciiUint24(br);
+            if (val.Character == 0x00)
             {
-                case RsgInfoType.Data:
-                    dataFile.Seek(FileOffset, SeekOrigin.Begin);
-                    byte[] file = new byte[FileSize];
-                    dataFile.ReadExactly(file);
+                RsgpFileInfo fileInfo = new(br);
+                switch (fileInfo.FileType)
+                {
+                    case RsgInfoType.Data:
+                        PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
+                        break;
+                    case RsgInfoType.Image:
+                        PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
+                        ImageInfo.Add(BinaryReaderHelper.ListByteToString(currentname), new RsgpImageInfo(br));
+                        break;
+                    default:
+                        break;
+                }
 
-                    Path.GetExtension(Name);
-                    string output = path + Name;
-                    // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? string.Empty);
-                    // File.WriteAllBytes(output, file);
+                int last = offset.Count - 1;
+                while (last >= 0 && offset[last] == 0x00)
+                {
+                    offset.RemoveAt(last);
+                    currentname.RemoveAt(last);
+                    last--;
+                }
 
-                    break;
-                case RsgInfoType.Image:
-                    int Id = br.ReadInt32(); // This is suppposed to be image id but is not set
-                    int Format = br.ReadInt32(); // This is suppposed to be image format but is not set
-                    _ = br.ReadInt32();
-                    int Width = br.ReadInt32();
-                    int Height = br.ReadInt32();
-
-                    PtxInfo imageInfo = ptx1Infos[startId++];
-
-                    imageFile.Seek(FileOffset, SeekOrigin.Begin);
-                    file = new byte[FileSize];
-                    imageFile.ReadExactly(file);
-
-                    // output = path + Name.Replace(".PTX", ".png"); // TEMP
-                    // Directory.CreateDirectory(output);
-                    // TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
-                    break;
-                default:
-                    throw new NotSupportedException($"Unsupported InfoType: {InfoType}");
+                if (last >= 0)
+                {
+                    br.BaseStream.Position = Pos + Header.TrieOffset + offset[last];
+                    offset.RemoveAt(last);
+                    currentname.RemoveAt(last);
+                }
+                continue;
             }
-        }
+        
+            currentname.Add(val.Character);
+            offset.Add(val.Offset << 2);
+        } while (offset.Count > 0);
+    }
 
-        dataFile.Dispose();
-        imageFile.Dispose();
+    public void Dispose()
+    {
+        DynamicDataStream.Dispose();
+        ImageStream.Dispose();
+        GC.SuppressFinalize(this);
     }
 }
 public enum RsgInfoType

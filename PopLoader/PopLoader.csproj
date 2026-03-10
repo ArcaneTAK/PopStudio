@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Remove="C:\Users\khanh\.nuget\packages\monogame.framework.content.pipeline\3.8.4.1\contentFiles\any\net8.0\mgfxc.dll" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="OpenTK.Graphics" Version="4.9.4" />
     <PackageReference Include="OpenTK.Windowing.Desktop" Version="4.9.4" />
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />

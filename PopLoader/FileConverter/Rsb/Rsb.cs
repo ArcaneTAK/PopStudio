@@ -1,9 +1,12 @@
-﻿using System.Text;
+﻿using System.Runtime.InteropServices;
+using System.Text;
 using PopLoader.FileConverter.Rsgp;
+using PopLoader.Texture;
 namespace PopLoader.FileConverter.Rsb;
 
-public static class ResourceBinary
+public class ResourceBinary
 {
+    
     public static void Unpack(string filePath, string outFolderPath)
     {
         FileStream fileStream = new FileStream(filePath, FileMode.Open);
@@ -15,21 +18,47 @@ public static class ResourceBinary
         {
             throw new NotImplementedException("Unsupported PTX info encoding");
         }
-        PtxInfo[] ptxInfos = new PtxInfo[rsbHeaderInfo.PtxCount];
-        br.BaseStream.Seek(rsbHeaderInfo.PtxInfoOffset, SeekOrigin.Begin);
-        for (int i = 0; i < ptxInfos.Length; i++)
-        {
-            ptxInfos[i] = new PtxInfo(br);
-        }
 
-        ResoureGroupHeader[] resourceGroups = new ResoureGroupHeader[rsbHeaderInfo.SubgroupCount];
-        br.BaseStream.Seek(rsbHeaderInfo.SubgroupInfoOffset, SeekOrigin.Begin);
-        for (int i = 0; i < rsbHeaderInfo.SubgroupCount; i++)
+        br.BaseStream.Seek(rsbHeaderInfo.PtxInfoOffset, SeekOrigin.Begin);
+        PtxInfo[] ptxInfos = new PtxInfo[rsbHeaderInfo.PtxCount];
+        br.Read(MemoryMarshal.AsBytes(ptxInfos.AsSpan()));
+
+        // ResoureGroupPackageInfo[] resourceGroups = new ResoureGroupPackageInfo[rsbHeaderInfo.PackageCount];
+        br.BaseStream.Seek(rsbHeaderInfo.PackageInfoOffset, SeekOrigin.Begin);
+        for (int i = 0; i < rsbHeaderInfo.PackageCount; i++)
+        // for (int i = 0; i < 40; i++)
         {
-            resourceGroups[i] = new ResoureGroupHeader(br);
+            var resourceGroup = new ResoureGroupPackageInfo(br);
             long startPos = br.BaseStream.Position;
-            br.BaseStream.Seek(resourceGroups[i].Offset, SeekOrigin.Begin);
-            ResourceGroupPackage.Unpack(br, ptxInfos, resourceGroups[i].StartImageId, outFolderPath);
+            br.BaseStream.Seek(resourceGroup.Offset, SeekOrigin.Begin);
+            var package = new ResourceGroupPackage(br);
+            foreach ((string filename, RsgpFileInfo fileinfo) in package.PackageFileInfo)
+            {
+                switch (fileinfo.FileType)
+                {
+                    case RsgInfoType.Data:
+                        package.DynamicDataStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+                        byte[] file = new byte[fileinfo.FileSize];
+                        package.DynamicDataStream.ReadExactly(file);
+                        string output = outFolderPath + filename;
+                        Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+                        File.WriteAllBytes(output, file);
+                        break;
+                    case RsgInfoType.Image:
+                        PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
+                        package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+                        file = new byte[fileinfo.FileSize];
+                        package.ImageStream.ReadExactly(file);
+                        output = outFolderPath + filename.Replace(".PTX", ".png");
+                        Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+                        TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
+                        break;
+                    default:
+                        break;
+                }
+
+
+            }
             br.BaseStream.Seek(startPos, SeekOrigin.Begin);
         }
 

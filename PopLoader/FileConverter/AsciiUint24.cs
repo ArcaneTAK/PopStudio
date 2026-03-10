@@ -5,7 +5,7 @@ using PopLoader.BinaryHelper;
 namespace PopLoader.FileConverter;
 
 [StructLayout(LayoutKind.Explicit)]
-public struct AsciiUint24 : IReadable<(byte, int)>, IWritable
+public struct AsciiUint24
 {
     [FieldOffset(0)]
     public byte Character;
@@ -14,16 +14,14 @@ public struct AsciiUint24 : IReadable<(byte, int)>, IWritable
     /// <summary>
     /// = (Offset from the start of trie to the next sibling) / 4
     /// </summary>
-    public readonly int Offset => _offset & 0xffffff >> 8;
-
-    public static (byte, int) Read(BinaryReader reader)
+    public readonly int Offset => _offset >> 8;
+    
+    public AsciiUint24(BinaryReader br)
     {
-        AsciiUint24 my = Unsafe.BitCast<int, AsciiUint24>(reader.ReadInt32());
-        return (my.Character, my.Offset);
+        _offset = br.ReadInt32();
     }
-
-    public void Write(BinaryWriter writer)
+    public void Write(BinaryWriter bw)
     {
-        writer.Write(_offset);
+        bw.Write(_offset);
     }
 }
