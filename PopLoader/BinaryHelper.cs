@@ -31,4 +31,10 @@ public static class BinaryReaderHelper
     {
         return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(buffer));
     }
+
+    public static string ReadUTF8ShortLengthPrefix(this BinaryReader br)
+    {
+        short Length = br.ReadInt16();
+        return Encoding.UTF8.GetString(br.ReadBytes(Length));
+    }
 }

@@ -50,6 +50,55 @@ public class ResourceGroupPackage : IDisposable
         long Pos = br.BaseStream.Position;
         Header = new(br);
 
+        ImageInfo = [];
+        PackageFileInfo = [];
+
+        br.BaseStream.Seek(Pos + Header.TrieOffset, SeekOrigin.Begin);
+
+        List<byte> currentname = []; List<int> offset = [];
+        var val = new AsciiUint24(br);
+        if (val.Character == 0x00) return;
+        do
+        {
+            if (val.Character != 0x00)
+            {
+                currentname.Add(val.Character);
+                offset.Add(val.Offset << 2);
+                continue;
+            }
+
+            RsgpFileInfo fileInfo = new(br);
+            switch (fileInfo.FileType)
+            {
+                case RsgInfoType.Data:
+                    PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
+                    break;
+                case RsgInfoType.Image:
+                    PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
+                    ImageInfo.Add(BinaryReaderHelper.ListByteToString(currentname), new RsgpImageInfo(br));
+                    break;
+                default:
+                    break;
+            }
+            if (currentname.Count == 0) throw new NotImplementedException();
+
+            int last = offset.Count - 1;
+            while (last >= 0 && offset[last] == 0x00)
+            {
+                offset.RemoveAt(last);
+                currentname.RemoveAt(last);
+                last--;
+            }
+
+            if (last < 0) break;
+
+            br.BaseStream.Position = Pos + Header.TrieOffset + offset[last];
+            offset.RemoveAt(last);
+            currentname.RemoveAt(last);
+            val = new AsciiUint24(br);
+
+        } while (offset.Count > 0);
+
         br.BaseStream.Seek(Pos + Header.DataOffset, SeekOrigin.Begin);
         DynamicDataStream = new(br.ReadBytes(Header.DataBlobSize));
         if (Header.DataFlags.HasFlag(DataFlags.CompressedData) && Header.DecompressedDataSize != 0)
@@ -59,53 +108,6 @@ public class ResourceGroupPackage : IDisposable
         ImageStream = new(br.ReadBytes(Header.CompressedImageSize));
         if (Header.DataFlags.HasFlag(DataFlags.CompressedImage) && Header.DecompressedImageSize != 0)
             ImageStream = Zlib.Decompress(ImageStream);
-
-        ImageInfo = [];
-        PackageFileInfo = [];
-
-        br.BaseStream.Seek(Pos + Header.TrieOffset, SeekOrigin.Begin);
-
-        List<byte> currentname = [];
-        List<int> offset = [];
-        do
-        {
-            var val = new AsciiUint24(br);
-            if (val.Character == 0x00)
-            {
-                RsgpFileInfo fileInfo = new(br);
-                switch (fileInfo.FileType)
-                {
-                    case RsgInfoType.Data:
-                        PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
-                        break;
-                    case RsgInfoType.Image:
-                        PackageFileInfo.Add(BinaryReaderHelper.ListByteToString(currentname), fileInfo);
-                        ImageInfo.Add(BinaryReaderHelper.ListByteToString(currentname), new RsgpImageInfo(br));
-                        break;
-                    default:
-                        break;
-                }
-
-                int last = offset.Count - 1;
-                while (last >= 0 && offset[last] == 0x00)
-                {
-                    offset.RemoveAt(last);
-                    currentname.RemoveAt(last);
-                    last--;
-                }
-
-                if (last >= 0)
-                {
-                    br.BaseStream.Position = Pos + Header.TrieOffset + offset[last];
-                    offset.RemoveAt(last);
-                    currentname.RemoveAt(last);
-                }
-                continue;
-            }
-        
-            currentname.Add(val.Character);
-            offset.Add(val.Offset << 2);
-        } while (offset.Count > 0);
     }
 
     public void Dispose()

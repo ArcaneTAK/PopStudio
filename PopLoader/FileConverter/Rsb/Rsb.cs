@@ -45,13 +45,13 @@ public class ResourceBinary
                         File.WriteAllBytes(output, file);
                         break;
                     case RsgInfoType.Image:
-                        PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
-                        package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
-                        file = new byte[fileinfo.FileSize];
-                        package.ImageStream.ReadExactly(file);
-                        output = outFolderPath + filename.Replace(".PTX", ".png");
-                        Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
-                        TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
+                        // PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
+                        // package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+                        // file = new byte[fileinfo.FileSize];
+                        // package.ImageStream.ReadExactly(file);
+                        // output = outFolderPath + filename.Replace(".PTX", ".png");
+                        // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+                        // TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
                         break;
                     default:
                         break;

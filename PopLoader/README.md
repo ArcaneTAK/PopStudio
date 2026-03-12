@@ -1,15 +1,14 @@
-In this text, strings are stored as big endian, numbers are store as little endian and are always based-10. Number are stored as unsigned. Offset are counted from the beginning of the respective structure.
+# Rsb
 
-### Basic Structure :
 
-# Trie_CharType_OffsetType_InfoType:
+
+### Trie_CharType_OffsetType_InfoType:
 A trie is a data structure representing file structure
 
 
 Trie_ASCII_Int24_Int32
 
 
-### Rsb : ReSource Binary
 General Structure:
 - Rsb Header
 - File Name to Package ID Trie
@@ -22,8 +21,9 @@ General Structure:
 - Packages
 
 Rsb Header:
-Offset      Size        Usage                   Example/ Comment
-0           4           header magic            must be "1bsr"
+Offset | Size | Usage | Example/ Comment
+---|---|---|---
+0 | 4 | header magic | must be "1bsr"
 4           4           version number          4
 8           4           reserved                0
 12          4           header size             2666496
