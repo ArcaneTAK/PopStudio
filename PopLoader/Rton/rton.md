@@ -4,7 +4,7 @@ This document is copied from [h3x4n1um's RETON](https://github.com/h3x4n1um/RETO
 
 # RTON
 
-* RTON file is a serialize type that very similar to JSON
+* RTON file is a serialize type that very similar to BSON
 
 * RTON file begins with `52 54 4F 4E` (`RTON` in ASCII) and follows by 4-byte little-endian indicates version of RTON (usually `01 00 00 00`) and ends with `44 4F 4E 45` (`DONE` in ASCII)
 

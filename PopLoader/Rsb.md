@@ -1,32 +1,55 @@
-# Rsb
+# Rsb (ResourceBinary)
 
 
 
-### Trie_CharType_OffsetType_InfoType:
-A trie is a data structure representing file structure
+> The name "ResourceBinary" is not the official name. I came up with it to make developement easier by avoiding excessive use of strange acronym. Many of the components making up it will also be "deabbrivated".
 
+## Basic
 
-Trie_ASCII_Int24_Int32
+__ResourceBinary__ file contain information require for fast lookup of files. __ResourceBinary__ contains:
+> Rsb Records:
+>
+> Rsb Header (size 112 = 0x70)
+>
+> File Name to Package ID Trie
+> Package Name to Package ID
+> Composite Info
+> Composite Trie
+> Package Info : each has 
+> Autopool Info
+> Ptx Info
+>
+> Packages:
+>
+>
+>
 
+## Rsb Header
+```
+Offset  00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F
 
-General Structure:
-- Rsb Header
-- File Name to Package ID Trie
-- Package Name to Package ID
-- Composite Info
-- Composite Trie
-- Package Info
-- Autopool Info
-- Ptx Info
-- Packages
+0x00    31 62 73 72 04 00 00 00 00 00 00 00 00 B0 28 00
+        1  b  s  r  ·  ·  ·  ·  ·  ·  ·  ·  ·  °  (  ·  
+0x10    6C 98 06 00 70 00 00 00 00 00 00 00 00 00 00 00
+        l  ·  ·  ·  p  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  
+0x20    B8 68 01 00 DC 98 06 00 14 09 00 00 4C A7 1B 00
+        ¸  h  ·  ·  Ü  ·  ·  ·  ·  ·  ·  ·  L  §  ·  ·  
+0x30    CC 00 00 00 1F 04 00 00 94 01 08 00 84 04 00 00
+        Ì  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  
+0x40    BC 09 01 00 90 9D 1A 00 14 09 00 00 3C E3 22 00
+        ¼  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  <  ã  "  ·  
+0x50    98 00 00 00 C4 05 00 00 1C 47 28 00 10 00 00 00
+        ·  ·  ·  ·  Ä  ·  ·  ·  ·  G  (  ·  ·  ·  ·  ·  
+0x60    00 00 00 00 00 00 00 00 00 00 00 00 00 B0 28 00
+        ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  °  (  ·
+```
 
-Rsb Header:
-Offset | Size | Usage | Example/ Comment
+Offset | Size | Usage | Example or Comment
 ---|---|---|---
 0 | 4 | header magic | must be "1bsr"
-4           4           version number          4
-8           4           reserved                0
-12          4           header size             2666496
+4 | 4 | version number |         4
+8 | 8 | reserved |
+12 | 4 | rsgp offset | 2666496
 
 16          4           file trie size          432236
 20          4           file trie offset        112

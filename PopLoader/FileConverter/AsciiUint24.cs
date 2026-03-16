@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using PopLoader.BinaryHelper;
+using PopLoader.BinaryManager;
 
 namespace PopLoader.FileConverter;
 

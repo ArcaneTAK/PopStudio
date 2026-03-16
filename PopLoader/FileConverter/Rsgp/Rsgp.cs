@@ -2,7 +2,7 @@ using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Text;
 using OpenTK.Windowing.Common.Input;
-using PopLoader.BinaryHelper;
+using PopLoader.BinaryManager;
 using PopLoader.FileConverter.Rsb;
 using PopLoader.Texture;
 

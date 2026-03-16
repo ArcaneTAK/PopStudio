@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace PopLoader.BinaryHelper;
+namespace PopLoader.BinaryManager;
 
 public static class Zlib
 {
