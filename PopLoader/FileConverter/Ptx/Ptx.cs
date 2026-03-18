@@ -1,4 +1,3 @@
-using System.Text;
 using PopLoader.Texture;
 
 namespace PopLoader.FileConverter.Ptx;

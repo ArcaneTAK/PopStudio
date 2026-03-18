@@ -1,3 +1,4 @@
+using PopLoader.BinaryManager;
 using PopLoader.FileConverter.Rsb;
 
 namespace PopLoader.FileConverter.Rsgp;
@@ -7,6 +8,34 @@ namespace PopLoader.FileConverter.Rsgp;
 /// </summary>
 public class RsgpHeader
 {
+    public const int RsgpHeaderMagic = 1920165744;  //  pgsr
+    public RsgpHeader(BinaryReader br)
+    {
+        br.ReadMagicInt32(RsgpHeaderMagic);
+        Version = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+
+        DataFlags = (DataFlags)br.ReadInt32();
+        RsgHeaderSize = br.ReadInt32();
+        DataOffset = br.ReadInt32();
+        DataBlobSize = br.ReadInt32();
+
+        DecompressedDataSize = br.ReadInt32();
+        _ = br.ReadInt32();
+        ImageOffset = br.ReadInt32();
+        CompressedImageSize = br.ReadInt32();
+
+        DecompressedImageSize = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        TrieSize = br.ReadInt32();
+        TrieOffset = br.ReadInt32();
+    }
     public int Version;
     public DataFlags DataFlags;
     public int RsgHeaderSize;
@@ -33,37 +62,4 @@ public class RsgpHeader
     /// </summary>
     public int TrieOffset;
 
-    public RsgpHeader(BinaryReader br)
-    {
-        int headerMagic = br.ReadInt32();
-        if (headerMagic != HeaderMagic.RsgpHeaderMagic)
-        {
-            throw new InvalidDataException($"Unsupported file format. Expected RSGP file magic: {HeaderMagic.RsgpHeaderMagic}, but got: {headerMagic}");
-        }
-
-        Version = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        DataFlags = (DataFlags)br.ReadInt32();
-        RsgHeaderSize = br.ReadInt32();
-
-        DataOffset = br.ReadInt32();
-        DataBlobSize = br.ReadInt32();
-        DecompressedDataSize = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        ImageOffset = br.ReadInt32();
-        CompressedImageSize = br.ReadInt32();
-        DecompressedImageSize = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        TrieSize = br.ReadInt32();
-        TrieOffset = br.ReadInt32();
-    }
 }

@@ -1,7 +1,5 @@
-using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
-using System.Runtime.Serialization;
 using System.Text;
 
 namespace PopLoader.BinaryManager;
@@ -27,14 +25,16 @@ public static class BinaryReaderHelper
             str.Add(a);
         return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(str));
     }
-    public static string ListByteToString(List<byte> buffer)
-    {
-        return Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(buffer));
-    }
 
     public static string ReadUTF8ShortLengthPrefix(this BinaryReader br)
     {
         short Length = br.ReadInt16();
         return Encoding.UTF8.GetString(br.ReadBytes(Length));
     }
+
+    public static void ReadMagicInt32(this BinaryReader br, int magic)
+    {
+        if (br.ReadInt32() != magic) throw new InvalidDataException("Wrong magic header! The file is not of the expected type or is corrupted");
+    }
+    public static int Utf8ToInt(string s) => BitConverter.ToInt32(Encoding.UTF8.GetBytes(s));
 }

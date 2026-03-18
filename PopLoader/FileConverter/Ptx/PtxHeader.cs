@@ -1,23 +1,14 @@
+using PopLoader.BinaryManager;
 using PopLoader.Texture;
 
 namespace PopLoader.FileConverter.Ptx;
 
 public class PtxHeader
 {
-    public int Version;
-    public int Width;
-    public int Height;
-    public int Check; // No idea what this does.
-    public PTXFormat Format;
-    public int AlphaSize;
-    public int AlphaFormat;
+    public const int Ptx1HeaderMagic = 1886681137;  //  1xtp
     public PtxHeader(BinaryReader br)
     {
-        int headerMagic = br.ReadInt32();
-        if (headerMagic != HeaderMagic.Ptx1HeaderMagic)
-        {
-            throw new InvalidDataException("Unsupported file format. Expected RSB file magic: " + HeaderMagic.Rsb1HeaderMagic + ", but got: " + headerMagic);
-        }
+        br.ReadMagicInt32(Ptx1HeaderMagic);
         Version = br.ReadInt32();
         Width = br.ReadInt32();
         Height = br.ReadInt32();
@@ -26,4 +17,12 @@ public class PtxHeader
         AlphaSize = br.ReadInt32();
         AlphaFormat = br.ReadInt32();
     }
+
+    public int Version;
+    public int Width;
+    public int Height;
+    public int Check; // No idea what this does.
+    public PTXFormat Format;
+    public int AlphaSize;
+    public int AlphaFormat;
 }

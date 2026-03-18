@@ -1,7 +1,50 @@
+using PopLoader.BinaryManager;
+
 namespace PopLoader.FileConverter.Rsb;
 
 public class RsbHeader
 {
+    public const int Rsb1HeaderMagic = 1920164401;  //  1bsr
+
+    public RsbHeader(BinaryReader br)
+    {
+        // 0x00
+        br.ReadMagicInt32(Rsb1HeaderMagic);
+        Version = br.ReadInt32();
+        _ = br.ReadInt32();
+        HeaderLength = br.ReadInt32();
+        // 0x10
+        FileTrieSizeBytes = br.ReadInt32();
+        FileTrieOffset = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        // 0x20
+            PackageTrieSizeBytes = br.ReadInt32();
+            PackageTrieOffset = br.ReadInt32();
+            PackageCount = br.ReadInt32();
+            PackageInfoOffset = br.ReadInt32();
+        // 0x30
+        // Composite Shell
+            OnePackageInfoSize = br.ReadInt32();
+        GroupCount = br.ReadInt32();
+        GroupInfoOffset = br.ReadInt32();
+        GroupInfoSize = br.ReadInt32();
+        // 0x40
+        GroupTrieCount = br.ReadInt32();
+        GroupTrieOffset = br.ReadInt32();
+            AutopoolCount = br.ReadInt32();
+            AutopoolInfoOffset = br.ReadInt32();
+        // 0x50
+            AutopoolInfoSize = br.ReadInt32();
+        PtxCount = br.ReadInt32();
+        PtxInfoOffset = br.ReadInt32();
+        PtxInfoSize = br.ReadInt32();
+        // 0x60
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        RsbInfoLength = br.ReadInt32();
+    }
     public int Version;
     public int HeaderLength;
     public int FileTrieSizeBytes;
@@ -40,47 +83,4 @@ public class RsbHeader
     // public int XmlPart3BeginOffset;
 
     public int RsbInfoLength;
-    public RsbHeader(BinaryReader br)
-    {
-        int headerMagic = br.ReadInt32();
-        if (headerMagic != HeaderMagic.Rsb1HeaderMagic)
-        {
-            throw new InvalidDataException("Unsupported file format. Expected RSB file magic: " + HeaderMagic.Rsb1HeaderMagic + ", but got: " + headerMagic);
-        }
-        
-        Version = br.ReadInt32();
-        _ = br.ReadInt32();
-        HeaderLength = br.ReadInt32();
-        
-        FileTrieSizeBytes = br.ReadInt32();
-        FileTrieOffset = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        PackageTrieSizeBytes = br.ReadInt32();
-        PackageTrieOffset = br.ReadInt32();
-        PackageCount = br.ReadInt32();
-        PackageInfoOffset = br.ReadInt32();
-
-        OnePackageInfoSize = br.ReadInt32();
-        GroupCount = br.ReadInt32();
-        GroupInfoOffset = br.ReadInt32();
-        GroupInfoSize = br.ReadInt32();
-
-        GroupTrieCount = br.ReadInt32();
-        GroupTrieOffset = br.ReadInt32();
-        AutopoolCount = br.ReadInt32();
-        AutopoolInfoOffset = br.ReadInt32();
-
-        AutopoolInfoSize = br.ReadInt32();
-        PtxCount = br.ReadInt32();
-        PtxInfoOffset = br.ReadInt32();
-        PtxInfoSize = br.ReadInt32();
-
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        RsbInfoLength = br.ReadInt32();
-    }
 }

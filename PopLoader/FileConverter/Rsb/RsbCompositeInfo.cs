@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace PopLoader.FileConverter.Rsb
+﻿namespace PopLoader.FileConverter.Rsb
 {
     /// <summary>
     /// 8 + 8 + 4 = 20 bytes

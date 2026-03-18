@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using PopLoader.FileConverter.Rsgp;
 
 namespace PopLoader.FileConverter.Rsb;

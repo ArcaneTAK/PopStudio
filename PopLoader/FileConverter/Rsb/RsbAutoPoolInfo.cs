@@ -1,21 +1,22 @@
-﻿namespace PopLoader.FileConverter.Rsb
-{
-    public class RsbAutoPoolInfo
-    {
-        public string ID;
-        public int part1_MaxOffset_InDecompress;
-        public int part1_MaxSize;
-        public int type = 1;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
-        public RsbAutoPoolInfo(BinaryReader br)
-        {
-            ID = new string(br.ReadChars(128));
-            part1_MaxOffset_InDecompress = br.ReadInt32();
-            part1_MaxSize = br.ReadInt32();
-            type = br.ReadInt32();
-            _ = br.ReadInt32();
-            _ = br.ReadInt32();
-            _ = br.ReadInt32();
-        }
+namespace PopLoader.FileConverter.Rsb
+{
+    [InlineArray(128)]
+    public struct String128
+    {
+        public byte buffer;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RsbAutoPool
+    {
+        public String128 ID;
+        public int DecompressedData;
+        public int DecompressedImage;
+        public int type; // always 1 for some reason
+        public int reserve0;
+        public int reserve1;
+        public int reserve2;
     }
 }
