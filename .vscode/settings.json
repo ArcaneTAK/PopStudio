@@ -1,3 +1,4 @@
 {
-    "dotnet.defaultSolution": "PopStudio.sln"
+    "dotnet.defaultSolution": "PopStudio.sln",
+    "markdown.extension.toc.updateOnSave": false
 }

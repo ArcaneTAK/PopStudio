@@ -1,137 +1,158 @@
-This document is copied from [h3x4n1um's RETON](https://github.com/h3x4n1um/RETON) and modified with information from the OG [PopStudio_Old](https://github.com/YingFengTingYu/PopStudio_Old).
+## Foreword
 
-<!-- # RETON: Reverse Engineering RTON (RE RTON -> RETON) -->
+This document is copied from [h3x4n1um's RETON](https://github.com/h3x4n1um/RETON) and modified with information from [PopStudio_Old](https://github.com/YingFengTingYu/PopStudio_Old).
 
-# RTON
+This documentation takes great inspiration from [BSON's specification](https://bsonspec.org/spec.html).
 
-* RTON file is a serialize type that very similar to BSON
+# RTON v1
 
-* RTON file begins with `52 54 4F 4E` (`RTON` in ASCII) and follows by 4-byte little-endian indicates version of RTON (usually `01 00 00 00`) and ends with `44 4F 4E 45` (`DONE` in ASCII)
+* RTON is a binary format in which zero or more ordered key/value pairs are stored as a single entity. This entity is called a Document.
+* A document conatins Elements, which can be divided into 3 catergories: Block, Numeral and String.
+  * [Block Element](#block-element)s are elements which contain nested Elements.
+  * [Numeral Elements](#numeral-element)s are used to store numeric values. All numeral types ares stored in little endian.
+  * [String Elements](#string-element)s are used to store strings and ids, and used as the key in key/value pair.
+* Elements has a bytecode indicating its type and a body. Some byte code indicate that the Element has a predefined value and does not have a body. 
+* Note that the `*` operator is shorthand for repetition. E.g. `byte*2` is byte byte, `byte*any` is any amount of byte.
 
-## RTON Cheatsheet
+## Document
+The container for all data in a RTON file.
 
-Bytecode | Type | Note
---- | --- | ---
-`0x0` | false |
-`0x1` | true |
-`0x8` | int8_t | int 8 bit
-`0x9` | 0 | 0 in int8_t?
-`0xa` | uint8_t | unsigned int 8 bit
-`0xb` | 0 | 0 in uint8_t?
-`0x10` | int16_t | int 16 bit
-`0x11` | 0 | 0 in int16_t?
-`0x12` | uint16_t | unsigned int 16 bit
-`0x13` | 0 | 0 in uint16_t?
-`0x20` | int32_t | int 32 bit
-`0x21` | 0 | 0 in int32_t?
-`0x22` | float | [Single-precision floating-point](https://en.wikipedia.org/wiki/Single-precision_floating-point_format)
-`0x23` | 0.0 | 0 in float?
-`0x24` | [uRTON_t](#unsigned-rton-number) | unsigned RTON number
-`0x25` | [VarInt](#rton-number) | RTON number
-`0x26` | uint32_t | unsigned int 32 bit
-`0x27` | 0 | 0 in uint32_t?
-`0x28` | [uRTON_t](#unsigned-rton-number) | unsigned RTON number
-`0x29` | [RTON_t](#rton-number) | RTON number
-`0x40` | int64_t | int 64 bit
-`0x41` | 0 | 0 in int64_t?
-`0x42` | double | [Double-precision floating-point](https://en.wikipedia.org/wiki/Double-precision_floating-point_format)
-`0x43` | 0.0 | 0 in double?
-`0x44` | [uRTON_t](#unsigned-rton-number) | unsigned RTON number
-`0x45` | [RTON_t](#rton-number) | RTON number
-`0x46` | uint64_t | unsigned int 64 bit
-`0x47` | 0 | 0 in uint64_t?
-`0x48` | [uRTON_t](#unsigned-rton-number) | unsigned RTON number
-`0x49` | [RTON_t](#rton-number) | RTON number
-`0x81` | [String](#string) |
-`0x82` | [Utf-8 string](#utf-8-string) |
-`0x83` | [RTID](#rtid) | RTON ID
-`0x85` | [Object](#object) |
-`0x86` | [Array](#array) |
-`0x90` | [Cached string](#cached-string) |
-`0x91` | [Cached string recall](#cached-string) |
-`0x92` | [Cached utf-8 string](#cached-utf-8-string) |
-`0x93` | [Cached utf-8 string recall](#cached-utf-8-string) |
-`0xfd` | [Begin of array](#array) | 
-`0xfe` | [End of array](#array) |
-`0xff` | [End of object](#end-of-object) |
+Definition: <br>
+`$MagicHeader $Version (KeyValuePair)*any $MagicFooter`
+* `MagicHeader` (uint)= 0x4e4f5452 (`RTON` in ASCII)
+* the RTON version (uint)= 1
+* MagicFooter (uint)= 0x454e4f44 (`DONE` in ASCII)
+Block
+### KeyValuePair
+Definition: `StringElement Element`
 
-## [VarInt](https://protobuf.dev/programming-guides/encoding/#varints) (a.k.a. 7BitEncodedInt)
-or Unsigned RTON Number (bruh)
-### `0x24`, `0x28`, `0x44` and `0x48`
+## Table of Element ByteCode
 
+Bytecode | Type | Value if predefined
+---|---|---
+---|**NumeralElement**
+`0x00` | Boolean | false
+`0x01` | Boolean | true
+`0x08` | Int8 |
+`0x09` | Int8 | 0
+`0x0a` | UInt8 |
+`0x0b` | UInt8 | 0
+`0x10` | Int16 |
+`0x11` | Int16 | 0
+`0x12` | UInt16 |
+`0x13` | UInt16 | 0
+`0x20` | Int32 |
+`0x21` | Int32 | 0
+`0x22` | Single |
+`0x23` | Single | 0.0f
+`0x24` | [VarInt32](#varint) |
+`0x25` | [Zigzag32](#varzigzag) |
+`0x26` | UInt32 |
+`0x27` | UInt32 | 0
+`0x28` | [VarUInt32](#varint) |
+`0x40` | Int64 |
+`0x41` | Int64 | 0
+`0x42` | Double |
+`0x43` | Double | 0
+`0x44` | [VarInt64](#varint) |
+`0x45` | [Zigzag64](#varzigzag) |
+`0x46` | UInt64 |
+`0x47` | UInt64 | 0
+`0x48` | [VarUInt64](#varint) |
+---|[**StringElement**](#string-element)
+`0x02` | String | null
+`0x81` | [AsciiString](#asciistring) |
+`0x82` | [Utf8String](#utf8string) |
+`0x83` | [RTID](#rtid) |
+`0x84` | [RTID](#rtid) | RTID(0)
+`0x87` | [BinaryString] |
+`0x90` | cache [ByteString](#string-caching) |
+`0x91` | recall [ByteString](#string-caching) |
+`0x92` | cache [Utf8String](#string-caching) |
+`0x93` | recall [Utf8String](#string-caching) |
+---|**BlockElement**
+`0x85` | Object | 
+`0x86` | Array |
 
+## Block Element
+[Block Element](#block-element)s are elements which contain nested Elements. Elements of this catergory is: Object, Array.
 
-* After that it does something like this pseudocode:
-
-    ```cpp
-    uint64_t uRTON_t2uint64_t(std::vector <uint8_t> q){
-		if (q.size() == 1 && q.back() > 0x7f) return UINT64_MAX; //return max when RTON number has 1 byte and > 0x7f
-
-		uint64_t res = 0;
-		while(q.size()){
-			uint64_t last_byte = q.back();
-			q.pop_back();
-
-			if (res%2 == 0) last_byte &= 0x7f;
-			res /= 2;
-			res = res*0x100+last_byte;
-		}
-
-		return res;
-	}
-    ```
-
+### Object
+Bytecode: `0x85` <br>
+Body: `KeyValuePair*any 0xff`
 * Example:
+```
+52 54 4F 4E 01 00 00 00 {
+    90 07 54 65 73 74 69 6E 67
+    "Testing":
+    85 {
+        90 05 48 65 6C 6C 6F 90 02 48 69
+        "Hello": "Hi"
+    FF }
+FF }
+44 4F 4E 45
+```
+### Array
+Bytecode: `0x86` <br>
+Body: `0xfd $Count Element*Count 0xfe` <br>
+where `Count` is [VarInt32](#varint)
+* Example:
+```
+52 54 4F 4E 01 00 00 00 {
+    90 0E 41 6E 45 78 61 6D 70 6C 65 41 72 72 61 79
+    "AnExampleArray": [
+    86 FD 03
+        90 0A 31 73 74 45 6C 65 6D 65 6E 74
+            "1stElement",
+        90 0A 32 6E 64 45 6C 65 6D 65 6E 74
+            "2ndElement",
+        90 0A 33 72 64 45 6C 65 6D 65 6E 74
+            "3rdElement"
+    FE ]
+FF }
+44 4F 4E 45
+```
 
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 05 56 61 6C 75 65 24 3D
-        90 09 53 6F 6D 65 56 61 6C 75 65 24 FE 01
-    FF
-    44 4F 4E 45
-    ```
+## Numeral Element
+[Numeral Elements](#numeral-element) are used to store numeric values. <br>
+The body of numeral element are the number themselves.  All numeral types are stored in little endian. <br>
+This section only presents some notable elements. See [Table](#table-of-element-bytecode) for others.
+### [VarInt](https://protobuf.dev/programming-guides/encoding/#varints)
+`0x24` VarInt32
+`0x28` VarUInt32
+`0x44` VarInt64
+`0x48` VarUInt64
 
-* JSON decode:
+### [VarZigZag](https://protobuf.dev/programming-guides/encoding/#signed-ints)
+`0x25` VarZigZag32
+`0x45` VarZigZag64
 
-    ```JSON
-    {
-        "Value": 61,
-        "SomeValue": 254
-    }
-    ```
+## String Element
+String Elements are used to store strings and ids, and used as the key in key/value pair.
 
-## RTON Number
+### AsciiString
+Bytecode: `0x81` <br>
+Body: `$Count Byte*Count` <br>
+Where `Count` is [VarInt32](#varint)
+* Example
+```
+81 06 6C 65 6D 65 6E 74
+"Element"
+```
+### Utf8String
+`0x82`
+Body: `82 $Utf8Count $ByteCount Byte*Count`
+where `Utf8Count`, `ByteCount` is [VarInt32](#varint)
+81 06 06 6C 65 6D 65 6E 74
+"Element"
 
-### `0x25`, `0x29`, `0x45` and `0x49`
-[Varint](https://protobuf.dev/programming-guides/encoding/#signed-ints)
-
-* Pseudocode:
-
-    ```cpp
-    RTON_number = unsigned_RTON_number;
-    if (RTON_number % 2) RTON_number = -(RTON_number + 1);
-    RTON_number /= 2;
-    ```
-
-## String
-
-### `0x81`
-
-* `81 xx [string]` creates a `[string]` that has EXACTLY `xx` **unsigned RTON number** of bytes
-
-## UTF-8 String
-
-### `0x82`
-
-* `82 [L1] [L2] [string]` where `[L1]` is **unsigned RTON number** of characters in utf-8 and `[L2]` is **unsigned RTON number** bytes of `[string]`
-
-## RTID
-
-### `0x83`
+### RTID
+Bytecode: `0x83`
 
 * `0x83` begins the RTID (RTON ID???) of RTON (cross-reference???)
 
 * It has 3 subsets (`0x0`, `0x2` and `0x3`)
+
 
 #### `0x0` Subset
 
@@ -221,69 +242,8 @@ or Unsigned RTON Number (bruh)
     }
     ```
 
-## Object
 
-### `0x85`
-
-* `0x85` creates an object as value
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 07 54 65 73 74 69 6E 67
-        85
-            90 05 48 65 6C 6C 6F 90 02 48 69
-        FF
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {
-        "Testing": {
-            "Hello": "Hi"
-        }
-    }
-    ```
-
-## Array
-
-### `0x86`, `0xfd` and `0xfe`
-
-* `0x86` declares an array
-
-* Array begins with `0xfd xx` and ends with `0xfe`, where `xx` is **unsigned RTON number** of elements
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 0E 41 6E 45 78 61 6D 70 6C 65 41 72 72 61 79
-        86 FD 03
-            90 0A 31 73 74 45 6C 65 6D 65 6E 74
-            90 0A 32 6E 64 45 6C 65 6D 65 6E 74
-            90 0A 33 72 64 45 6C 65 6D 65 6E 74
-        FE
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {
-        "AnExampleArray": [
-            "1stElement",
-            "2ndElement",
-            "3rdElement"
-        ]
-    }
-    ```
-
-## Cached String
+## String Caching
 
 ### `0x90` and `0x91`
 
@@ -349,33 +309,3 @@ or Unsigned RTON Number (bruh)
         "Thử nghiệm": "Đây là utf8"
     }
     ```
-
-## End of Object
-
-### `0xff`
-
-* `0xff` marks end of an object
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {}
-    ```
-
-## TODO
-
-* **Find the correct format of 0x8300 and 0x8302**
-
-* Support regex input e.g: `rton-json *.rton`
-
-* Check for endianness
-
-* Write a header file act like extension to json.hpp, [something like `json::from_cbor()` and `json::to_cbor()`](https://github.com/nlohmann/json#binary-formats-bson-cbor-messagepack-and-ubjson)

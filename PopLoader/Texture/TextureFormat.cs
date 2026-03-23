@@ -4,9 +4,6 @@ namespace PopLoader.Texture
 {
     public enum PTXFormat
     {
-        /// <summary>
-        /// <see cref="SixLabors.ImageSharp.PixelFormats.Abgr32"/>
-        /// </summary>
         Abgr32,
         Rgba16,
         Rgb565,
