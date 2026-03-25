@@ -1,4 +1,4 @@
-﻿namespace PopLoader.FileConverter.Rsb
+﻿namespace PopLoader.DataProcessor.Rsb
 {
     /// <summary>
     /// 8 + 8 + 4 = 20 bytes

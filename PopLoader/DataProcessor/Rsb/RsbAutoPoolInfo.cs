@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace PopLoader.FileConverter.Rsb
+namespace PopLoader.DataProcessor.Rsb
 {
     [InlineArray(128)]
     public struct String128

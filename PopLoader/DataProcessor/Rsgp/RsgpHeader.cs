@@ -1,7 +1,8 @@
-using PopLoader.BinaryManager;
-using PopLoader.FileConverter.Rsb;
+using PopLoader;
+using PopLoader.DataProcessor.BinaryHelper;
+using PopLoader.DataProcessor.Rsb;
 
-namespace PopLoader.FileConverter.Rsgp;
+namespace PopLoader.DataProcessor.Rsgp;
 
 /// <summary>
 /// Not to be confused with <see cref="ResoureGroupPackageInfo"/> 

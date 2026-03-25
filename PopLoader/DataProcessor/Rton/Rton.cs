@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices.JavaScript;
 
-namespace PopLoader.FileConverter.Rton;
+namespace PopLoader.DataProcessor.Rton;
 
 public class Rton
 {

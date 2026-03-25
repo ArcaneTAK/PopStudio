@@ -1,7 +1,8 @@
-using PopLoader.BinaryManager;
+using PopLoader;
+using PopLoader.DataProcessor.BinaryHelper;
 using PopLoader.Texture;
 
-namespace PopLoader.FileConverter.Ptx;
+namespace PopLoader.DataProcessor.Ptx;
 
 public class PtxHeader
 {

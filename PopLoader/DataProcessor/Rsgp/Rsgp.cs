@@ -1,9 +1,10 @@
 using System.Runtime.InteropServices;
 using System.Text;
-using PopLoader.BinaryManager;
-using PopLoader.FileConverter.Rsb;
+using PopLoader;
+using PopLoader.DataProcessor.BinaryHelper;
+using PopLoader.DataProcessor.Rsb;
 
-namespace PopLoader.FileConverter.Rsgp;
+namespace PopLoader.DataProcessor.Rsgp;
 
 public class RsgpFileInfo
 {

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace PopLoader.FileConverter;
+namespace PopLoader.DataProcessor.BinaryHelper;
 
 [StructLayout(LayoutKind.Explicit)]
 public struct AsciiUint24
@@ -18,7 +18,7 @@ public struct AsciiUint24
     {
         _offset = br.ReadInt32();
     }
-    public void Write(BinaryWriter bw)
+    public readonly void Write(BinaryWriter bw)
     {
         bw.Write(_offset);
     }

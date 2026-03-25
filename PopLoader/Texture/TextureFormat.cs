@@ -1,4 +1,4 @@
-using PopLoader.FileConverter.Rsb;
+using PopLoader.DataProcessor.Rsb;
 
 namespace PopLoader.Texture
 {

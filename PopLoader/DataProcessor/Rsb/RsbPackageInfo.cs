@@ -1,6 +1,6 @@
-using PopLoader.FileConverter.Rsgp;
+using PopLoader.DataProcessor.Rsgp;
 
-namespace PopLoader.FileConverter.Rsb;
+namespace PopLoader.DataProcessor.Rsb;
 
 /// <summary>
 /// Not to be confused with <see cref="RsgpHeader"/>

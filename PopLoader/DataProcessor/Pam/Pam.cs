@@ -1,4 +1,4 @@
-namespace PopLoader.FileConverter.Pam;
+namespace PopLoader.DataProcessor.Pam;
 
 public class Pam
 {

@@ -1,6 +1,6 @@
 ﻿using PopLoader.Texture;
 
-namespace PopLoader.FileConverter.Rsb
+namespace PopLoader.DataProcessor.Rsb
 {
     public struct PtxInfo
     {

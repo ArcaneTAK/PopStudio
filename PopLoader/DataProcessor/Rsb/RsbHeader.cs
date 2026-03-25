@@ -1,6 +1,7 @@
-using PopLoader.BinaryManager;
+using PopLoader;
+using PopLoader.DataProcessor.BinaryHelper;
 
-namespace PopLoader.FileConverter.Rsb;
+namespace PopLoader.DataProcessor.Rsb;
 
 public class RsbHeader
 {
