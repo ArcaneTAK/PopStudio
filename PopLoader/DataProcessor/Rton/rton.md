@@ -60,19 +60,20 @@ Bytecode | Type | Value if predefined
 `0x47` | UInt64 | 0
 `0x48` | [VarUInt64](#varint) |
 ---|[**StringElement**](#string-element)
-`0x02` | String | null
+`0x02` | String | EmptyString
 `0x81` | [AsciiString](#asciistring) |
 `0x82` | [Utf8String](#utf8string) |
-`0x83` | [RTID](#rtid) |
-`0x84` | [RTID](#rtid) | RTID(0)
-`0x87` | [BinaryString] |
-`0x90` | cache [ByteString](#string-caching) |
-`0x91` | recall [ByteString](#string-caching) |
+`0x90` | cache [AsciiString](#string-caching) |
+`0x91` | recall [AsciiString](#string-caching) |
 `0x92` | cache [Utf8String](#string-caching) |
 `0x93` | recall [Utf8String](#string-caching) |
 ---|**BlockElement**
 `0x85` | Object | 
 `0x86` | Array |
+---|**Others**
+`0x83` | [RTID](#rtid) |
+`0x84` | [RTID](#rtid) | RTID(0)
+`0x87` | [BinaryString] |
 
 ## Block Element
 [Block Element](#block-element)s are elements which contain nested Elements. Elements of this catergory is: Object, Array.
@@ -118,18 +119,20 @@ FF }
 The body of numeral element are the number themselves.  All numeral types are stored in little endian. <br>
 This section only presents some notable elements. See [Table](#table-of-element-bytecode) for others.
 ### [VarInt](https://protobuf.dev/programming-guides/encoding/#varints)
-`0x24` VarInt32
-`0x28` VarUInt32
-`0x44` VarInt64
-`0x48` VarUInt64
+Varint encoding reduces the size of many integer by omitting the most significant bits. The codes for its members are: 
+- `0x24` VarInt32
+- `0x28` VarUInt32
+- `0x44` VarInt64
+- `0x48` VarUInt64
 
 ### [VarZigZag](https://protobuf.dev/programming-guides/encoding/#signed-ints)
-`0x25` VarZigZag32
-`0x45` VarZigZag64
+Negative number are stored using two's complement. I.E. -2 becomes ~0 + (-2) + 1 and hence use the upper bytes.
+Zigzag encoding makes the sign bit to be the least significant bit and apply bitwise not to the absolute value bit. The codes for its members are:
+- `0x25` VarZigZag32
+- `0x45` VarZigZag64
 
 ## String Element
-String Elements are used to store strings and ids, and used as the key in key/value pair.
-
+String Elements are used to store strings and ids, and used as the key in key/value pair. Bytecode `0x02` is used for empty string.
 ### AsciiString
 Bytecode: `0x81` <br>
 Body: `$Count Byte*Count` <br>
@@ -140,113 +143,53 @@ Where `Count` is [VarInt32](#varint)
 "Element"
 ```
 ### Utf8String
-`0x82`
-Body: `82 $Utf8Count $ByteCount Byte*Count`
-where `Utf8Count`, `ByteCount` is [VarInt32](#varint)
+ByteCode: `0x82` <br>
+Body: `$Utf8Count $ByteCount Byte*Count` <br>
+where `Utf8Count`, `ByteCount` are [VarInt32](#varint)
+```
 81 06 06 6C 65 6D 65 6E 74
 "Element"
-
+```
+## Others Element
 ### RTID
 Bytecode: `0x83`
+RTID references to other informational resources in the PACKAGE directory. In `PvZ2lib.so`, only 
+#### `0x0` Subcode
+> [!WARNING] Not Used
+> ```
+> 83 00
+> "RTID()"
+> ```
 
-* `0x83` begins the RTID (RTON ID???) of RTON (cross-reference???)
 
-* It has 3 subsets (`0x0`, `0x2` and `0x3`)
+#### `0x02` Subcode
 
+> [!WARNING] Not Used, Unsure
+> Body: `02 $InitRtonName $MajorVersion $MinorVersion $Id`
+> where `InitRtonName` is [Utf8String](#utf8string), `MajorVersion`, `MinorVersion` are UInt8, `Id` is UInt32.
+> ```
+> 83 02 0C 0C 51 75 65 73 74 73 41 63 74 69 76 65
+> 00 01 7D A7 7B 6D
+> "RTID(1.0.6d7ba77d@QuestsActive)"
+> ```
 
-#### `0x0` Subset
-
+#### `0x03` Subcode
+Body: `$InitRtonName $PropertyName`
+where `InitRtonName`, `PropertyName` are [Utf8String](#utf8string).
 ```
-83 00
+83 03 0c 0c 4c 65 76 65 6c 4d 6f 64 75 6c 65 73
+0b 0b 44 65 66 61 75 6c 74 4c 6f 6f 74
+RTID(LevelModules@DefaultLoot)
 ```
-
-* Format: **RTID()** (this is just my assumption, it may not be correct)
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 09 6D 5F 74 68 69 73 50 74 72 83 00
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {
-        "m_thisPtr": "RTID()"
-    }
-    ```
-
-#### `0x2` Subset
-
-```
-83 02 [L1] [L2] [string] [U2] [U1] [4-byte ID]
-```
-
-* Format: **RTID(`[U1]`.`[U2]`.`[4-byte ID]`@`[string]`)** (this is just my assumption, it may not be correct)
-
-* `[L1] [L2] [string]` is same as `0x82`
-
-* `[U2]` is second number in uid
-
-* `[U1]` is first number in uid
-
-* `[ID]` is third (hex) number in uid
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 09 6D 5F 74 68 69 73 50 74 72 83 02 0C 0C 51 75 65 73 74 73 41 63 74 69 76 65 00 01 7D A7 7B 6D
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {
-        "m_thisPtr": "RTID(1.0.6d7ba77d@QuestsActive)"
-    }
-    ```
-
-#### `0x3` Subset
-
-```
-83 03 [L1] [L2] [string] [L3] [L4] [string 2]
-```
-
-* Format: **RTID(`[string 2]`@`[string]`)**
-
-* After `0x8303` is 2 strings format: `[L1] [L2] [string]` and `[L3] [L4] [string 2]` same as `0x82`
-
-* Example:
-
-    ```
-    52 54 4F 4E 01 00 00 00
-        90 0C 52 54 49 44 20 45 78 61 6D 70 6C 65
-        83 03
-            09 09 31 73 74 53 74 72 69 6E 67
-            09 09 32 6E 64 53 74 72 69 6E 67
-    FF
-    44 4F 4E 45
-    ```
-
-* JSON decode:
-
-    ```JSON
-    {
-        "RTID Example": "RTID(2ndString@1stString)"
-    }
-    ```
-
 
 ## String Caching
 
-### `0x90` and `0x91`
+`0x90` cache [AsciiString](#asciistring)|
+`0x91` recall [AsciiString](#asciistring)|
+`0x92` cache [Utf8String](#utf8string) |
+`0x93` recall [Utf8String](#utf8string)
 
+Cache the string into a list. Recall string with index.
 * `90 xx [string]`, the `xx [string]` is just like `0x81`
 
 * By using `0x90`, the string is cached then it can be recalled by `91 xx`, `xx` is **unsigned RTON number**-th element in the cached (starting from 0)

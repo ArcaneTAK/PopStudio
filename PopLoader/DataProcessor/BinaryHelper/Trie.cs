@@ -7,7 +7,7 @@ public class TrieNode<T>
     public byte Character;
     public T? Value;
     public List<TrieNode<T>> Children = [];
-    public void ReadDescendants(BinaryReader br, long StartOffset, ReadBinary<T> reader)
+    public void ReadDescendants(BinaryReader br, long StartOffset, Func<BinaryReader, T> reader)
     {
         while (true)
         {
@@ -28,15 +28,19 @@ public class TrieNode<T>
     }
 }
 
-public class ByteIntTrie<T>
+public class ByteUInt24Trie<T>
 {
     public TrieNode<T> RootNode;
-    public ByteIntTrie(BinaryReader br, ReadBinary<T> reader){
+    public ByteUInt24Trie(BinaryReader br, Func<BinaryReader, T> reader){
         RootNode = new TrieNode<T>();
+        if (br.PeekChar() == 0x00) return;
         RootNode.ReadDescendants(br, br.BaseStream.Position, reader);
     }
+}
 
-    public static void ReadWithAction(BinaryReader br, ReadBinary<T> readBinary, Action<string, T> readAction)
+public class ByteUInt24Trie
+{
+    public static void ReadWithAction(BinaryReader br, Action<string, BinaryReader> readAction)
     {
         long start = br.BaseStream.Position;
         var val = new AsciiUint24(br);
@@ -56,9 +60,7 @@ public class ByteIntTrie<T>
                 int last = offset.Count - 1;
                 string name = Encoding.UTF8.GetString(CollectionsMarshal.AsSpan(currentname).Slice(0, last));
 
-
-                T readResult = readBinary(br);
-                readAction(name, readResult);
+                readAction(name, br);
 
                 while (last >= 0 && offset[last] == 0)
                 {

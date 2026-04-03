@@ -1,7 +1,4 @@
 # Rsb (ResourceBinary)
-
-> The name "ResourceBinary" is not the official name. I came up with it to make developement "easier" by avoiding excessive use of strange acronym. Many of the components making up it will also be "deabbrivated".
-
 ## Basics
 
 **ResourceBinary** (**Rsb**) file contain information required for fast lookup of files, packages and groups. All offsets except in **Packages** and **IndexTrie**s are relative to the start of the **ResourceBinary** file.
@@ -21,7 +18,7 @@
 In **ResourceBinary**, only **Package**s are stored; access to a **File** require opening the package containing it and access to a **Group** is simply opening multiple **Package**s.
 - A **Group** is collection of packages. A group of audio packages is also called a **CompositeShell**.
 - A **Package** is collection of files.
-- A **File** is one of the game's assets.
+- A **File** is one of the game's assets. File and directory name in Rsb file is case insensitive.
 ### Pool (AutoPool)
 **Disclaimer: Very Unsure**
 

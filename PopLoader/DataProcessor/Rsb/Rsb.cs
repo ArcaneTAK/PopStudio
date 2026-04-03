@@ -19,9 +19,11 @@ public class ResourceBinary
         if (rsbHeaderInfo.PtxInfoSize != 16)
             throw new NotImplementedException("Unsupported PTX info encoding");
 
-        // br.BaseStream.Seek(rsbHeaderInfo.PtxInfoOffset, SeekOrigin.Begin);
-        // PtxInfo[] ptxInfos = new PtxInfo[rsbHeaderInfo.PtxCount];
-        // br.Read(MemoryMarshal.AsBytes(ptxInfos.AsSpan()));
+        #region PtxInfo
+            br.BaseStream.Seek(rsbHeaderInfo.PtxInfoOffset, SeekOrigin.Begin);
+            PtxInfo[] ptxInfos = new PtxInfo[rsbHeaderInfo.PtxCount];
+            br.Read(MemoryMarshal.AsBytes(ptxInfos.AsSpan()));   
+        #endregion
 
         // br.BaseStream.Seek(rsbHeaderInfo.AutopoolInfoOffset, SeekOrigin.Begin);
         // RsbAutoPool[] autopoolInfo = new RsbAutoPool[rsbHeaderInfo.AutopoolCount];
@@ -97,53 +99,52 @@ public class ResourceBinary
         #endregion
 
         #region GroupTrie
-        br.BaseStream.Seek(rsbHeaderInfo.GroupTrieOffset, SeekOrigin.Begin);
-        using FileStream fi = File.OpenWrite(outFolderPath + "Group.txt");
-        using StreamWriter sw = new StreamWriter(fi);
-        ByteIntTrie<int>.ReadWithAction(br, BinaryReaderHelper.ReadInt32, (name, id) =>
-        {
-            sw.Write($"{name} {id}\n");
-        });
+        // br.BaseStream.Seek(rsbHeaderInfo.GroupTrieOffset, SeekOrigin.Begin);
+        // using FileStream fi = File.OpenWrite(outFolderPath + "Group.txt");
+        // using StreamWriter sw = new StreamWriter(fi);
+        // ByteUInt24Trie.ReadWithAction(br, (name, subbr) =>
+        // {
+        //     sw.Write($"{name} {subbr.ReadInt32()}\n");
+        // });
         #endregion
 
         #region Package
-        // ResoureGroupPackageInfo[] resourceGroups = new ResoureGroupPackageInfo[rsbHeaderInfo.PackageCount];
-        // br.BaseStream.Seek(rsbHeaderInfo.PackageInfoOffset, SeekOrigin.Begin);
-        // for (int i = 0; i < rsbHeaderInfo.PackageCount; i++)
-        // // for (int i = 0; i < 40; i++)
-        // {
-        //     var resourceGroup = new ResoureGroupPackageInfo(br);
-        //     long startPos = br.BaseStream.Position;
-        //     br.BaseStream.Seek(resourceGroup.Offset, SeekOrigin.Begin);
-        //     var package = new ResourceGroupPackage(br);
-        //     foreach ((string filename, RsgpFileInfo fileinfo) in package.PackageFileInfo)
-        //     {
-        //         switch (fileinfo.FileType)
-        //         {
-        //             case RsgInfoType.Data:
-        //                 package.DynamicDataStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
-        //                 byte[] file = new byte[fileinfo.FileSize];
-        //                 package.DynamicDataStream.ReadExactly(file);
-        //                 string output = outFolderPath + filename;
-        //                 Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
-        //                 File.WriteAllBytes(output, file);
-        //                 break;
-        //             case RsgInfoType.Image:
-        //                 // PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
-        //                 // package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
-        //                 // file = new byte[fileinfo.FileSize];
-        //                 // package.ImageStream.ReadExactly(file);
-        //                 // output = outFolderPath + filename.Replace(".PTX", ".png");
-        //                 // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
-        //                 // TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
-        //                 break;
-        //             default:
-        //                 break;
-        //         }
+        ResoureGroupPackageInfo[] resourceGroups = new ResoureGroupPackageInfo[rsbHeaderInfo.PackageCount];
+        br.BaseStream.Seek(rsbHeaderInfo.PackageInfoOffset, SeekOrigin.Begin);
+        for (int i = 0; i < rsbHeaderInfo.PackageCount; i++)
+        {
+            var resourceGroup = new ResoureGroupPackageInfo(br);
+            long startPos = br.BaseStream.Position;
+            br.BaseStream.Seek(resourceGroup.Offset, SeekOrigin.Begin);
+            var package = new ResourceGroupPackage(br);
+            foreach ((string filename, RsgpFileInfo fileinfo) in package.PackageFileInfo)
+            {
+                string output = outFolderPath + filename;
+                byte[] file = new byte[fileinfo.FileSize];
+                switch (fileinfo.FileType)
+                {
+                    case RsgInfoType.Data:
+                        // package.DynamicDataStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+                        // package.DynamicDataStream.ReadExactly(file);
+                        // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+                        // File.WriteAllBytes(output, file);
+                        break;
+                    case RsgInfoType.Image:
+                        PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
+                        package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+                        file = new byte[fileinfo.FileSize];
+                        package.ImageStream.ReadExactly(file);
+                        output = outFolderPath + filename.Replace(".PTX", ".png");
+                        Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+                        TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
+                        break;
+                    default:
+                        break;
+                }
 
-        //     }
-        //     br.BaseStream.Seek(startPos, SeekOrigin.Begin);
-        // }
+            }
+            br.BaseStream.Seek(startPos, SeekOrigin.Begin);
+        }
         #endregion
 
         // var groupInfoArray = new CompositeInfo[rsbHeaderInfo.GroupCount];
