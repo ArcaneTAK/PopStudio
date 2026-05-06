@@ -1,4 +1,5 @@
-﻿using PopLoader.Texture;
+﻿using System.Runtime.InteropServices;
+using PopLoader.Texture;
 
 namespace PopLoader.DataProcessor.Rsb
 {
@@ -12,12 +13,12 @@ namespace PopLoader.DataProcessor.Rsb
         public int Stride;
         public PTXFormat Format;
 
-        public PtxInfo(BinaryReader bs)
+        public PtxInfo(BinaryReader br)
         {
-            Width = bs.ReadInt32();
-            Height = bs.ReadInt32();
-            Stride = bs.ReadInt32();
-            Format = (PTXFormat)bs.ReadInt32();
+            Width = br.ReadInt32();
+            Height = br.ReadInt32();
+            Stride = br.ReadInt32();
+            Format = (PTXFormat)br.ReadInt32();
         }
     }
 }

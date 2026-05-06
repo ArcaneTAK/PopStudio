@@ -7,57 +7,20 @@ namespace PopLoader.DataProcessor.Rsb;
 
 public class ResourceBinary
 {
-    
-    public static void Unpack(string filePath, string outFolderPath)
+    public RsbHeader Header;
+    public PtxInfo[] TextureInfo;
+    public ResourceBinary(BinaryReader br)
     {
-        FileStream fileStream = new FileStream(filePath, FileMode.Open);
-        using BinaryReader br = new(fileStream);
-        
-        RsbHeader rsbHeaderInfo = new(br);
+        Header = new RsbHeader(br);
 
-
-        if (rsbHeaderInfo.PtxInfoSize != 16)
+        if (Header.PtxInfoSize != 16)
             throw new NotImplementedException("Unsupported PTX info encoding");
 
         #region PtxInfo
-            br.BaseStream.Seek(rsbHeaderInfo.PtxInfoOffset, SeekOrigin.Begin);
-            PtxInfo[] ptxInfos = new PtxInfo[rsbHeaderInfo.PtxCount];
-            br.Read(MemoryMarshal.AsBytes(ptxInfos.AsSpan()));   
+            br.BaseStream.Seek(Header.PtxInfoOffset, SeekOrigin.Begin);
+            TextureInfo = new PtxInfo[Header.PtxCount];
+            br.Read(MemoryMarshal.AsBytes(TextureInfo.AsSpan()));   
         #endregion
-
-        // br.BaseStream.Seek(rsbHeaderInfo.AutopoolInfoOffset, SeekOrigin.Begin);
-        // RsbAutoPool[] autopoolInfo = new RsbAutoPool[rsbHeaderInfo.AutopoolCount];
-        // br.Read(MemoryMarshal.AsBytes(autopoolInfo.AsSpan()));
-        
-        // using FileStream fi = File.OpenWrite(outFolderPath + "Autopool.txt");
-        // using BinaryWriter sbr = new BinaryWriter(fi);
-
-        // HashSet<int> maxoffset = [];
-        // HashSet<int> maxsize = [];
-        // HashSet<int> types = [];
-
-        // for (int i = 0; i < autopoolInfo.Length; i++)
-        // {
-        //     RsbAutoPool pool = autopoolInfo[i];
-        //     var st = Encoding.UTF8.GetString(pool.ID[..]).TrimEnd('\x00');
-        //     var str =
-        //     st + $" {pool.DecompressedData} {pool.DecompressedImage} {pool.type}\n";
-        //     sbr.Write(Encoding.UTF8.GetBytes(str));
-        //     types.Add(pool.type);
-        //     maxoffset.Add(pool.DecompressedData);
-        //     maxsize.Add(pool.DecompressedImage);
-        // }
-        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(maxoffset) + "\n"));
-        // foreach (var item in maxoffset)
-        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
-        
-        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(maxsize) + "\n"));
-        // foreach (var item in maxsize)
-        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
-        
-        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(types) + "\n"));
-        // foreach (var item in types)
-        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
         
         #region PackageTrie
         // br.BaseStream.Seek(rsbHeaderInfo.PackageTrieOffset, SeekOrigin.Begin);
@@ -109,52 +72,89 @@ public class ResourceBinary
         #endregion
 
         #region Package
-        ResoureGroupPackageInfo[] resourceGroups = new ResoureGroupPackageInfo[rsbHeaderInfo.PackageCount];
-        br.BaseStream.Seek(rsbHeaderInfo.PackageInfoOffset, SeekOrigin.Begin);
-        for (int i = 0; i < rsbHeaderInfo.PackageCount; i++)
-        {
-            var resourceGroup = new ResoureGroupPackageInfo(br);
-            long startPos = br.BaseStream.Position;
-            br.BaseStream.Seek(resourceGroup.Offset, SeekOrigin.Begin);
-            var package = new ResourceGroupPackage(br);
-            foreach ((string filename, RsgpFileInfo fileinfo) in package.PackageFileInfo)
-            {
-                string output = outFolderPath + filename;
-                byte[] file = new byte[fileinfo.FileSize];
-                switch (fileinfo.FileType)
-                {
-                    case RsgInfoType.Data:
-                        // package.DynamicDataStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
-                        // package.DynamicDataStream.ReadExactly(file);
-                        // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
-                        // File.WriteAllBytes(output, file);
-                        break;
-                    case RsgInfoType.Image:
-                        PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
-                        package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
-                        file = new byte[fileinfo.FileSize];
-                        package.ImageStream.ReadExactly(file);
-                        output = outFolderPath + filename.Replace(".PTX", ".png");
-                        Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
-                        TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
-                        break;
-                    default:
-                        break;
-                }
+        // ResoureGroupPackageInfo[] resourceGroups = new ResoureGroupPackageInfo[rsbHeaderInfo.PackageCount];
+        // br.BaseStream.Seek(rsbHeaderInfo.PackageInfoOffset, SeekOrigin.Begin);
+        // for (int i = 0; i < rsbHeaderInfo.PackageCount; i++)
+        // {
+        //     var resourceGroup = new ResoureGroupPackageInfo(br);
+        //     long startPos = br.BaseStream.Position;
+        //     br.BaseStream.Seek(resourceGroup.Offset, SeekOrigin.Begin);
+        //     var package = new ResourceGroupPackage(br);
+        //     foreach ((string filename, RsgpFileInfo fileinfo) in package.PackageFileInfo)
+        //     {
+        //         System.Console.WriteLine(resourceGroup.Name+" "+filename);
+        //         // string output = outFolderPath + filename;
+        //         // byte[] file = new byte[fileinfo.FileSize];
+        //         // switch (fileinfo.FileType)
+        //         // {
+        //         //     case RsgInfoType.Data:
+        //         //         // package.DynamicDataStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+        //         //         // package.DynamicDataStream.ReadExactly(file);
+        //         //         // Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+        //         //         // File.WriteAllBytes(output, file);
+        //         //         break;
+        //         //     case RsgInfoType.Image:
+        //         //         PtxInfo imageInfo = ptxInfos[resourceGroup.StartImageId + package.ImageInfo[filename].ImageIndexInPackage];
+        //         //         package.ImageStream.Seek(fileinfo.FileOffset, SeekOrigin.Begin);
+        //         //         package.ImageStream.ReadExactly(file);
+        //         //         Directory.CreateDirectory(Path.GetDirectoryName(output) ?? "");
+        //         //         output = output.Replace(".PTX", ".png");
+        //         //         TextureConverter.ConvertDataToImage(file, imageInfo.Width, imageInfo.Height, imageInfo.Format, output);
+        //         //         break;
+        //         //     default:
+        //         //         break;
+        //         // }
 
-            }
-            br.BaseStream.Seek(startPos, SeekOrigin.Begin);
-        }
+        //     }
+        //     br.BaseStream.Seek(startPos, SeekOrigin.Begin);
+        // }
         #endregion
 
-        // var groupInfoArray = new CompositeInfo[rsbHeaderInfo.GroupCount];
-        // br.BaseStream.Seek(rsbHeaderInfo.GroupInfoOffset, SeekOrigin.Begin);
+
+        #region CompositeInfo
+        // var groupInfoArray = new CompositeInfo[Header.GroupCount];
+        // br.BaseStream.Seek(Header.GroupInfoOffset, SeekOrigin.Begin);
         // for (int i = 0; i < groupInfoArray.Length; i++)
         // {
         //     ref CompositeInfo k = ref groupInfoArray[i];
-        //     k = new CompositeInfo().Read(br);
+        //     k = new CompositeInfo(br);
         // }
+        // #endregion
 
+        // #region Autopool
+        // br.BaseStream.Seek(Header.AutopoolInfoOffset, SeekOrigin.Begin);
+        // RsbAutoPool[] autopoolInfo = new RsbAutoPool[Header.AutopoolCount];
+        // br.Read(MemoryMarshal.AsBytes(autopoolInfo.AsSpan()));
         
+        // using FileStream fi = File.OpenWrite("Autopool.txt");
+        // using BinaryWriter sbr = new BinaryWriter(fi);
+
+        // HashSet<int> maxoffset = [];
+        // HashSet<int> maxsize = [];
+        // HashSet<int> types = [];
+
+        // for (int i = 0; i < autopoolInfo.Length; i++)
+        // {
+        //     RsbAutoPool pool = autopoolInfo[i];
+        //     var st = Encoding.UTF8.GetString(pool.ID[..]).TrimEnd('\x00');
+        //     var str =
+        //     st + $" {pool.DecompressedData} {pool.DecompressedImage} {pool.type}\n";
+        //     sbr.Write(Encoding.UTF8.GetBytes(str));
+        //     types.Add(pool.type);
+        //     maxoffset.Add(pool.DecompressedData);
+        //     maxsize.Add(pool.DecompressedImage);
+        // }
+        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(maxoffset) + "\n"));
+        // foreach (var item in maxoffset)
+        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
+        
+        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(maxsize) + "\n"));
+        // foreach (var item in maxsize)
+        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
+        
+        // sbr.Write(Encoding.UTF8.GetBytes("\n" + nameof(types) + "\n"));
+        // foreach (var item in types)
+        //     sbr.Write(Encoding.UTF8.GetBytes(item.ToString() + " "));
+        #endregion
     }
 }

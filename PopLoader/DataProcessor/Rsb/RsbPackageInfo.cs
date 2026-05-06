@@ -7,7 +7,35 @@ namespace PopLoader.DataProcessor.Rsb;
 /// </summary>
 public class ResoureGroupPackageInfo
 {
-    public string Name;
+    public ResoureGroupPackageInfo(BinaryReader br)
+    {
+        Name = new string(br.ReadChars(128)).Replace("\0", null);
+        Offset = br.ReadInt32();
+        Size = br.ReadInt32();
+        Id = br.ReadInt32();
+
+        DataFlags = (DataFlags)br.ReadInt32();
+        RsgHeaderSize = br.ReadInt32();
+
+        DataOffset = br.ReadInt32();
+        DataBlobSize = br.ReadInt32();
+        DecompressedDataSize = br.ReadInt32();
+        _ = br.ReadInt32();
+
+        ImageOffset = br.ReadInt32();
+        CompressedImageSize = br.ReadInt32();
+        DecompressedImageSize = br.ReadInt32();
+        _ = br.ReadInt32();
+
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+        _ = br.ReadInt32();
+
+        ImageCount = br.ReadInt32();
+        StartImageId = br.ReadInt32();
+    }
+        public string Name;
     public int Offset;
     public int Size;
     /// <summary>
@@ -40,34 +68,6 @@ public class ResoureGroupPackageInfo
     /// Can be understood as the number of images in packages before this one.
     /// </summary>
     public int StartImageId;
-    public ResoureGroupPackageInfo(BinaryReader br)
-    {
-        Name = new string(br.ReadChars(128)).Replace("\0", null);
-        Offset = br.ReadInt32();
-        Size = br.ReadInt32();
-        Id = br.ReadInt32();
-
-        DataFlags = (DataFlags)br.ReadInt32();
-        RsgHeaderSize = br.ReadInt32();
-
-        DataOffset = br.ReadInt32();
-        DataBlobSize = br.ReadInt32();
-        DecompressedDataSize = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        ImageOffset = br.ReadInt32();
-        CompressedImageSize = br.ReadInt32();
-        DecompressedImageSize = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-        _ = br.ReadInt32();
-
-        ImageCount = br.ReadInt32();
-        StartImageId = br.ReadInt32();
-    }
 }
 [Flags]
 public enum DataFlags

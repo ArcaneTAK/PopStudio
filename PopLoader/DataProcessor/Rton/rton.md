@@ -1,6 +1,6 @@
 ## Foreword
 
-This document is copied from [h3x4n1um's RETON](https://github.com/h3x4n1um/RETON) and modified with information from [PopStudio_Old](https://github.com/YingFengTingYu/PopStudio_Old).
+This document is copied from [h3x4n1um's RETON](https://github.com/h3x4n1um/RETON) and modified with information from [PopStudio_Old](https://github.com/YingFengTingYu/PopStudio_Old). Types that are not used in 
 
 This documentation takes great inspiration from [BSON's specification](https://bsonspec.org/spec.html).
 
@@ -26,10 +26,31 @@ Block
 ### KeyValuePair
 Definition: `StringElement Element`
 
+- [RTON v1](#rton-v1)
+  - [Document](#document)
+    - [KeyValuePair](#keyvaluepair)
+  - [Table of Element ByteCode](#table-of-element-bytecode)
+  - [Block Element](#block-element)
+    - [Object](#object)
+    - [Array](#array)
+  - [Numeral Element](#numeral-element)
+    - [VarInt](#varint)
+    - [VarZigZag](#varzigzag)
+  - [String Element](#string-element)
+    - [AsciiString](#asciistring)
+    - [Utf8String](#utf8string)
+  - [Others Element](#others-element)
+    - [RTID](#rtid)
+      - [`0x03` Subcode](#0x03-subcode)
+  - [String Caching](#string-caching)
+  - [Cached UTF-8 String](#cached-utf-8-string)
+    - [`0x92` and `0x93`](#0x92-and-0x93)
+
+
 ## Table of Element ByteCode
 
-Bytecode | Type | Value if predefined
----|---|---
+Bytecode | Type | Value if predefined | Notes
+---|---|---|---
 ---|**NumeralElement**
 `0x00` | Boolean | false
 `0x01` | Boolean | true
@@ -73,7 +94,7 @@ Bytecode | Type | Value if predefined
 ---|**Others**
 `0x83` | [RTID](#rtid) |
 `0x84` | [RTID](#rtid) | RTID(0)
-`0x87` | [BinaryString] |
+`0x87` | [BinaryString]() |
 
 ## Block Element
 [Block Element](#block-element)s are elements which contain nested Elements. Elements of this catergory is: Object, Array.
@@ -119,17 +140,12 @@ FF }
 The body of numeral element are the number themselves.  All numeral types are stored in little endian. <br>
 This section only presents some notable elements. See [Table](#table-of-element-bytecode) for others.
 ### [VarInt](https://protobuf.dev/programming-guides/encoding/#varints)
-Varint encoding reduces the size of many integer by omitting the most significant bits. The codes for its members are: 
-- `0x24` VarInt32
-- `0x28` VarUInt32
-- `0x44` VarInt64
-- `0x48` VarUInt64
+Varint encoding reduces the size of many integer by omitting the most significant bits in ints which do not need them. The codes for its members are: `0x24` VarInt32 | `0x28` VarUInt32 | `0x44` VarInt64 | `0x48` VarUInt64.
 
 ### [VarZigZag](https://protobuf.dev/programming-guides/encoding/#signed-ints)
 Negative number are stored using two's complement. I.E. -2 becomes ~0 + (-2) + 1 and hence use the upper bytes.
-Zigzag encoding makes the sign bit to be the least significant bit and apply bitwise not to the absolute value bit. The codes for its members are:
-- `0x25` VarZigZag32
-- `0x45` VarZigZag64
+Zigzag encoding use the least significant bit as the sign bit  and the other bits are use to store the absolute value (negative values -1 before storing). The codes for its members are:
+`0x25` VarZigZag32 | `0x45` VarZigZag64
 
 ## String Element
 String Elements are used to store strings and ids, and used as the key in key/value pair. Bytecode `0x02` is used for empty string.
@@ -152,27 +168,10 @@ where `Utf8Count`, `ByteCount` are [VarInt32](#varint)
 ```
 ## Others Element
 ### RTID
+Based on [PopStudio_Old](https://github.com/YingFengTingYu/PopStudio_Old)
+
 Bytecode: `0x83`
-RTID references to other informational resources in the PACKAGE directory. In `PvZ2lib.so`, only 
-#### `0x0` Subcode
-> [!WARNING] Not Used
-> ```
-> 83 00
-> "RTID()"
-> ```
-
-
-#### `0x02` Subcode
-
-> [!WARNING] Not Used, Unsure
-> Body: `02 $InitRtonName $MajorVersion $MinorVersion $Id`
-> where `InitRtonName` is [Utf8String](#utf8string), `MajorVersion`, `MinorVersion` are UInt8, `Id` is UInt32.
-> ```
-> 83 02 0C 0C 51 75 65 73 74 73 41 63 74 69 76 65
-> 00 01 7D A7 7B 6D
-> "RTID(1.0.6d7ba77d@QuestsActive)"
-> ```
-
+RTID references to other resources in the PACKAGE directory. Has a one-byte subcode to indicate its type
 #### `0x03` Subcode
 Body: `$InitRtonName $PropertyName`
 where `InitRtonName`, `PropertyName` are [Utf8String](#utf8string).
@@ -182,14 +181,42 @@ where `InitRtonName`, `PropertyName` are [Utf8String](#utf8string).
 RTID(LevelModules@DefaultLoot)
 ```
 
+> [!WARNING] Not Used, Unsure, DO NOT USE
+> #### `0x0` Subcode
+> ```
+> 83 00
+> "RTID()"
+> ```
+> #### `0x1` Subcode
+> Body: `01 $MajorVersion $MinorVersion $Id`<br>
+> where `MajorVersion`, `MinorVersion` are UInt8, `Id` is UInt32.
+> ```
+> 83 01 41 63 74 69 76 65
+> "RTID(1.0.6d7ba77d@)"
+> ```
+> #### `0x02` Subcode
+> Body: `02 $PropertyName $MajorVersion $MinorVersion $Id`<br>
+> where `PropertyName` is [Utf8String](#utf8string), `MajorVersion`, `MinorVersion` are UInt8, `Id` is UInt32.
+> ```
+> 83 02 0C 0C 51 75 65 73 74 73 41 63 74 69 76 65
+> 00 01 7D A7 7B 6D
+> "RTID(1.0.6d7ba77d@QuestsActive)"
+> ```
+
+### ByteString
+> [!WARNING] Not Used, Unsure, DO NOT USE
+> Body: `00 $Count Byte*Count $Something`<br>
+> where `Count`, `Something` is [VarInt32](#varint).
+> 87 00 0C 51 75 65 73 74 73 41 63 74 69 76 65 6D
+> ```
+> "BINARY(QuestsActive@110)"
+> ```
+
 ## String Caching
 
-`0x90` cache [AsciiString](#asciistring)|
-`0x91` recall [AsciiString](#asciistring)|
-`0x92` cache [Utf8String](#utf8string) |
-`0x93` recall [Utf8String](#utf8string)
-
 Cache the string into a list. Recall string with index.
+`0x90` cache [AsciiString](#asciistring) | `0x91` recall [AsciiString](#asciistring) | `0x92` cache [Utf8String](#utf8string) | `0x93` recall [Utf8String](#utf8string)
+
 * `90 xx [string]`, the `xx [string]` is just like `0x81`
 
 * By using `0x90`, the string is cached then it can be recalled by `91 xx`, `xx` is **unsigned RTON number**-th element in the cached (starting from 0)
